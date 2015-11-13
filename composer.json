@@ -1,5 +1,5 @@
 {
-    "name": "alexbrombal/saffyre",
+    "name": "saffyre/saffyre",
     "description": "Saffyre is a tiny php web framework.",
     "keywords": ["minimal", "framework"],
     "license": "MIT",
