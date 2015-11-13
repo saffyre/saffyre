@@ -9,12 +9,11 @@ namespace Saffyre;
  * @see \Saffyre\Controller
  * @package Saffyre
  */
-class HttpHeaders extends BaseClass {
+class HttpHeaders {
 
     private $values = [];
 
-    public function __construct($values = null) {
-        parent::__construct($values);
+    public function __construct() {
     }
 
     public function __isset($name)
@@ -29,6 +28,6 @@ class HttpHeaders extends BaseClass {
 
     public function __set($name, $value)
     {
-        $this->value[strtolower($name)] = $value;
+        $this->values[strtolower($name)] = $value;
     }
 }
