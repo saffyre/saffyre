@@ -394,7 +394,7 @@ final class Controller
         {
             $this->executeGlobal();
             if ($this->canceled)
-                return null;
+                return $this->response;
         }
 
         return $this->executeFile();
