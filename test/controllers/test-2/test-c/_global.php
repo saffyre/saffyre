@@ -1,1 +1,0 @@
-test-2/test-c/_global.php

@@ -32,7 +32,7 @@ final class Controller
         $dir = rtrim($dir, DIRECTORY_SEPARATOR);
         $dir = $dir[0] == DIRECTORY_SEPARATOR ? $dir : getcwd() . $dir;
         if (!is_dir($dir))
-            throw new \Exception("Directory '$dir' is not a directory!");
+            throw new \Exception("Could not register controllers directory: '$dir' is not a directory!");
         self::$dirs[] = ['dir' => $dir, 'prefix' => $prefix, 'priority' => $priority];
         usort(self::$dirs, function($a, $b) { return $a['priority'] - $b['priority']; });
     }
@@ -190,16 +190,17 @@ final class Controller
      * The HTTP status code response.
      * @var int
      */
-    public $statusCode = 200;
+    public $statusCode;
 
     /**
      * The HTTP status message.
      * @var string
      */
-    public $statusMessage = 'OK';
+    public $statusMessage;
 
     public function setStatusCode($code, $message = null) {
         $this->statusCode = $code;
+        $this->statusMessage = $message ?: Request::getDefaultStatusMessage($code);
     }
 
     /**
@@ -346,8 +347,9 @@ final class Controller
                 $controller->executeFile();
                 if ($controller->statusCode !== null)
                     $this->setStatusCode($controller->statusCode, $controller->statusMessage);
-                if ($controller->response !== null) {
+                if ($controller->response !== null || ($controller->statusCode >= 400 && $controller->statusCode < 600)) {
                     $this->canceled = true;
+                    $this->response = $controller->response;
                     return;
                 }
             }
@@ -364,7 +366,7 @@ final class Controller
 
         ob_start();
         $response = include $this->dir . DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, $this->file) . '.php';
-        $ob = ob_get_clean();
+        $ob = ob_get_clean() ?: null;
         if ($response === 1) $response = $ob ?: null;
 
         array_pop(self::$stack);
@@ -372,8 +374,11 @@ final class Controller
         if (is_int($response) && $response >= 100 && $response < 600)
         {
             $this->setStatusCode($response);
-            $response = '';
+            $response = $ob;
         }
+
+        if ($this->statusCode === null)
+            $this->setStatusCode(200);
 
         return $this->response = $response;
     }
