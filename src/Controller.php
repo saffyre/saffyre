@@ -2,6 +2,8 @@
 
 namespace Saffyre;
 
+use Underscore\Types\Arrays;
+
 final class Controller
 {
 
@@ -211,7 +213,7 @@ final class Controller
 
     public function addHeader($name, $value) {
         if (!is_array($this->responseHeaders->$name))
-            $this->responseHeaders->$name = Arrays::ensure($this->responseHeaders->$name);
+            $this->responseHeaders->$name = [ $this->responseHeaders->$name ];
         array_push($this->responseHeaders->$name, $value);
     }
 
@@ -286,12 +288,12 @@ final class Controller
                 array_unshift($info['args'], $slug = array_pop($info['file']));
             } while($slug);
 
-            if (!$max || count(Arrays::array_clean($info['file'], '_default')) > count(Arrays::array_clean($max['file'], '_default')))
+            if (!$max || count(Arrays::without($info['file'], '_default')) > count(Arrays::without($max['file'], '_default')))
                 $max = $info;
         }
 
         if(!$max || !$max['file']) {
-            throw new Exception('Invalid controller path. Maybe you don\'t have a _default.php file.');
+            throw new \Exception('Invalid controller path. Maybe you don\'t have a _default.php file.');
         }
 
         $this->dir = $max['dir'];
