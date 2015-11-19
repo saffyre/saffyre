@@ -10,8 +10,6 @@ namespace Saffyre;
  */
 class Request {
 
-
-
     /**
      * Redirects the current request using an HTTP 301 redirect, then terminates execution. Optionally sets extra headers.
      *
@@ -24,7 +22,7 @@ class Request {
         if(preg_match('/^https?:\/\//', $url))
             header("Location: $url");
         else
-            header('Location: ' . rtrim(URL_BASE, '/') . '/' . ltrim($url, '/'));
+            header('Location: ' . rtrim(Config::$baseUrl, '/') . '/' . ltrim($url, '/'));
         if(is_array($headers)) foreach($headers as $header) header($header);
         exit;
     }
@@ -72,22 +70,4 @@ class Request {
     {
         return !empty($_SERVER['HTTPS']);
     }
-
-    public static function forceSSL()
-    {
-        if (!Request::isSSL())
-        {
-            $url = Saffyre::$baseUrl . ltrim(Saffyre::request(), '/');
-            $ssl = preg_replace('/^http:/', 'https:', $url);
-            Request::redirect($ssl);
-        }
-    }
-
-    public static function forceTrailingSlash($slash = true)
-    {
-        $lastChar = substr(Request::current()->path, -1);
-        if(!$_POST && strlen(Request::current()->path) > 1 && ($slash ? $lastChar != '/' : $lastChar == '/'))
-            Request::redirect(rtrim(Request::current()->path, '/') . ($slash ? '/' : '') . (Request::current()->query ? '?'.Request::current()->query : ''));
-    }
-
 }

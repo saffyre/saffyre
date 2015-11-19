@@ -24,12 +24,20 @@ namespace Saffyre {
         foreach ($controller->responseHeaders as $header => $value)
             header("$header: $value");
 
-        // Convert the output to a string
-        if (is_object($result) || is_array($result))
-        {
-            if (strpos(strtolower($controller->headers->{"Content-Type"}), 'application/json') === 0)
-                $result = json_encode($result);
-        }
+        // Convert the output to a string:
+        // - If the result is an object that implements __toString, convert it to a string
+        // - If the result is an array, json_encode it
+        // - If the response content-type header is json, json_encode it
+        // - If the result is an object that implements JsonSerializable, json_encode it
+
+        if (method_exists($result, '__toString'))
+            $result = (string)$result;
+        else if (
+            is_array($result) ||
+            (is_object($result) && array_filter(headers_list(), function($h) { return strpos(strtolower(preg_replace('/\\s/', '', $h)), 'content-type:application/json') === 0; })) ||
+            $result instanceof \JsonSerializable
+        )
+            $result = json_encode($result);
 
         if ($controller->statusCode != null)
             Request::responseStatus($controller->statusCode, $controller->statusMessage);
