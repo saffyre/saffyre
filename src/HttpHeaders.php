@@ -13,7 +13,9 @@ class HttpHeaders {
 
     private $values = [];
 
-    public function __construct() {
+    public function __construct($values = []) {
+        foreach ($values as $key => $value)
+            $this->$key = $value;
     }
 
     public function __isset($name)
