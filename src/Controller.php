@@ -2,8 +2,6 @@
 
 namespace Saffyre;
 
-use Underscore\Types\Arrays;
-
 final class Controller
 {
 
