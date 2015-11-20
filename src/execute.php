@@ -57,6 +57,8 @@ namespace {
             foreach ($_SERVER as $name => $value)
                 if (substr($name, 0, 5) == 'HTTP_')
                     $headers[str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
+            $headers['Content-Type'] = $_SERVER['CONTENT_TYPE'];
+            $headers['Content-Length'] = $_SERVER['CONTENT_LENGTH'];
             return $headers;
         }
     }
