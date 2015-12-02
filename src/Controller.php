@@ -20,7 +20,7 @@ final class Controller
      *     'priority' => integer, the priority that the directory takes in handling requests. Higher integers indicate that the directory will handle requests before other matching directories with lower priority.
      *     'extensions' => bool|string|array, whether to allow content-type extensions in the last path segment.
      *         'true' allows content-type extensions on all paths.
-     *         a string or array of string of request path prefixes that allow content-type extensions.
+     *         a string or array of strings of request path prefixes that allow content-type extensions.
      * @throws \Exception
      */
     public static function registerDirectory($directory = []) {
@@ -267,7 +267,7 @@ final class Controller
         $url = parse_url($url);
         $this->scheme = !empty($url['scheme']) ? $url['scheme'] : (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on' ? 'https' : 'http');
         $this->host = !empty($url['host']) ? $url['host'] : (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '');
-        $this->path = !empty($url['path']) ? $url['path'] : '';
+        $this->path = !empty($url['path']) ? trim($url['path'], '/') : '';
         $this->query = !empty($url['query']) ? $url['query'] : '';
 
         $sep = DIRECTORY_SEPARATOR;
