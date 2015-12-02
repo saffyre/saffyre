@@ -12,13 +12,13 @@ class GlobalTest extends PHPUnit_Framework_TestCase
 
     public function testGlobalController()
     {
-        \Saffyre\Controller::registerDirectory(self::$controllers, 'http://test.com/');
+        \Saffyre\Controller::registerDirectory(self::$controllers);
 
 
         $controller = \Saffyre\Controller::create('get', 'http://test.com/');
         $controller->execute();
 
-        $this->assertEquals(self::$controllers, $controller->dir());
+        $this->assertEquals(self::$controllers, $controller->dir['path']);
         $this->assertEquals('_default.php', $controller->file());
         $this->assertEquals(1, count($controller->globalControllers));
         $this->assertNull($controller->globalControllers[0]->response);
@@ -29,7 +29,7 @@ class GlobalTest extends PHPUnit_Framework_TestCase
         $controller = \Saffyre\Controller::create('get', 'http://test.com/test-a');
         $controller->execute();
 
-        $this->assertEquals(self::$controllers, $controller->dir());
+        $this->assertEquals(self::$controllers, $controller->dir['path']);
         $this->assertEquals('test-a/_default.php', $controller->file());
         $this->assertEquals(2, count($controller->globalControllers));
         $this->assertEquals('_global.php', $controller->globalControllers[0]->file());
@@ -42,7 +42,7 @@ class GlobalTest extends PHPUnit_Framework_TestCase
 
     public function testGlobalCanceledController()
     {
-        \Saffyre\Controller::registerDirectory(self::$controllers, 'http://test.com/');
+        \Saffyre\Controller::registerDirectory(self::$controllers);
         $controller = \Saffyre\Controller::create('get', 'http://test.com/test-b/test-i');
         $controller->execute();
 
@@ -59,7 +59,7 @@ class GlobalTest extends PHPUnit_Framework_TestCase
 
     public function testGlobalErrorStatusController()
     {
-        \Saffyre\Controller::registerDirectory(self::$controllers, 'http://test.com/');
+        \Saffyre\Controller::registerDirectory(self::$controllers);
         $controller = \Saffyre\Controller::create('get', 'http://test.com/test-c');
         $controller->execute();
 
@@ -76,7 +76,7 @@ class GlobalTest extends PHPUnit_Framework_TestCase
 
     public function testGlobalOutputController()
     {
-        \Saffyre\Controller::registerDirectory(self::$controllers, 'http://test.com/');
+        \Saffyre\Controller::registerDirectory(self::$controllers);
         $controller = \Saffyre\Controller::create('get', 'http://test.com/test-d');
         $controller->execute();
 

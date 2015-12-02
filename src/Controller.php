@@ -4,40 +4,44 @@ namespace Saffyre;
 
 final class Controller
 {
-
     // REGISTERED DIRECTORIES
 
     /**
-     * The array of registered directories where Saffyre looks for controller files. Each entry has the following format:
-     * array(
-     *     'dir' => The absolute path name to the folder containing controller files
-     *     'prefix' => The prefix, as a string or regular expression, that the request must match in order for this directory to serve a response
-     *     'priority' => The priority that this folder takes over other valid directories. Higher numbers have higher priorities.
-     * )
+     * The array of registered directories where Saffyre looks for controller files.
+     * @see Controller::registerDirectory
      * @var array
      */
-    private static $dirs = [];
+    private static $directories = [];
 
     /**
-     * @param $dir string The absolute path of the directory containing controller files
-     * @param $prefix string The prefix that the request must match in order to be handled by the directory
-     * @param null $priority The priority that the directory takes in handling requests. Higher numbers indicate higher priorities
+     * @param $directory array|string The absolute path name to the folder containing controller files, or a settings array
+     *     'path' => The absolute path name to the folder containing controller files
+     *     'prefix' => string, the start of the request path that must match in order to be handled by the directory
+     *     'priority' => integer, the priority that the directory takes in handling requests. Higher integers indicate that the directory will handle requests before other matching directories with lower priority.
+     *     'extensions' => bool|string|array, whether to allow content-type extensions in the last path segment.
+     *         'true' allows content-type extensions on all paths.
+     *         a string or array of string of request path prefixes that allow content-type extensions.
      * @throws \Exception
      */
-    public static function registerDirectory($dir, $prefix = "", $priority = null) {
-        if ($priority === null)
-            $priority = max(array_map(function($d) { return $d['priority']; }, self::$dirs) ?: [0]) + 1;
-        $dir = rtrim($dir, DIRECTORY_SEPARATOR);
-        $dir = $dir[0] == DIRECTORY_SEPARATOR ? $dir : getcwd() . $dir;
-        if (!is_dir($dir))
-            throw new \Exception("Could not register controllers directory: '$dir' is not a directory!");
-        self::$dirs[] = ['dir' => $dir, 'prefix' => $prefix, 'priority' => $priority];
-        usort(self::$dirs, function($a, $b) { return $a['priority'] - $b['priority']; });
+    public static function registerDirectory($directory = []) {
+        if (is_string($directory))
+            $directory = [ 'path' => $directory ];
+        $directory += [
+            'prefix' => '',
+            'priority' => max(array_map(function($d) { return $d['priority']; }, self::$directories) ?: [0]) + 1,
+            'extensions' => false
+        ];
+        $directory['path'] = rtrim($directory['path'], DIRECTORY_SEPARATOR);
+        $directory['path'] = $directory['path'][0] == DIRECTORY_SEPARATOR ? $directory['path'] : getcwd() . $directory['path'];
+        if (!is_dir($directory['path']))
+            throw new \Exception("Could not register controllers directory: '{$directory['path']}' is not a directory!");
+        self::$directories[] = $directory;
+        usort(self::$directories, function($a, $b) { return $a['priority'] - $b['priority']; });
     }
 
     public static function resetRegisteredDirectories()
     {
-        self::$dirs = [];
+        self::$directories = [];
     }
 
 
@@ -82,6 +86,8 @@ final class Controller
 
     public $path;
 
+    public $extension;
+
     /**
      * Get an item from the path of this request, or an array containing the path segments.
      * @param int $index The index to return, or null to return the entire array.
@@ -89,7 +95,8 @@ final class Controller
      */
     public function path($index = null)
     {
-        return $index === null ? $this->path : (isset($this->path[$index]) ? $this->path[$index] : '');
+        $parts = $this->cleanPath($this->path);
+        return $index === null ? $parts : (isset($parts[$index]) ? $$parts[$index] : '');
     }
 
     public $query;
@@ -221,15 +228,12 @@ final class Controller
 
     // CONTROLLER FILE VALUES
 
-    private $dir;
-
     /**
-     * The absolute path to the registered directory that the controller file is contained in.
-     * @return string
+     * The entry from Controller::$directories that this controller matches.
+     * @see Controller::$directories
+     * @var array
      */
-    public function dir() {
-        return $this->dir;
-    }
+    public $directory;
 
     private $file = [];
 
@@ -255,14 +259,14 @@ final class Controller
 
     public function __construct($method, $url) {
 
-        if(!count(self::$dirs))
+        if(!count(self::$directories))
             throw new \Exception('No controller directories have been registered! (Use Controller::registerDirectory(...))');
 
         $this->method = strtoupper($method);
 
         $url = parse_url($url);
-        $this->scheme = !empty($url['scheme']) ? $url['scheme'] : ($_SERVER['HTTPS'] == 'on' ? 'https' : 'http');
-        $this->host = !empty($url['host']) ? $url['host'] : $_SERVER['HTTP_HOST'];
+        $this->scheme = !empty($url['scheme']) ? $url['scheme'] : (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on' ? 'https' : 'http');
+        $this->host = !empty($url['host']) ? $url['host'] : (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '');
         $this->path = !empty($url['path']) ? $url['path'] : '';
         $this->query = !empty($url['query']) ? $url['query'] : '';
 
@@ -272,18 +276,44 @@ final class Controller
 
         $max = null;
 
-        foreach (self::$dirs as $dir)
+        foreach (self::$directories as $dir)
         {
             $info = [
-                'dir' => $dir['dir'],
+                'dir' => $dir,
                 'args' => [],
-                'file' => $this->segments
+                'file' => $this->segments,
+                'extension' => ''
             ];
+
+            if ($dir['extensions'])
+            {
+                $lastIndex = count($info['file']) - 1;
+                @list($filename, $extension) = explode('.', $info['file'][$lastIndex], 2);
+                if ($filename && $extension)
+                {
+                    if (is_string($dir['extensions']))
+                        $dir['extensions'] = [ $dir['extensions'] ];
+                    if (!is_array($dir['extensions']) ||
+                        (is_array($dir['extensions']) &&
+                            count(array_filter($dir['extensions'], function($prefix) {
+                                $x1 = strpos($this->path, trim($prefix, '/') . '/') === 0;
+                                $x2 = strpos($this->path, trim($prefix, '/') . '.') === 0;
+                                $x3 = trim($prefix, '/') === $this->path;
+                                return $x1 || $x2 || $x3;
+                            }))
+                        )
+                    )
+                    {
+                        $info['extension'] = $extension;
+                        $info['file'][$lastIndex] = $filename;
+                    }
+                }
+            }
 
             do {
                 $file = implode($sep, $info['file']);
-                if (is_file("{$info['dir']}{$sep}{$file}{$sep}_default.php") && $info['file'][] = '_default') break;
-                if (is_file("{$info['dir']}{$sep}{$file}.php")) break;
+                if (is_file("{$info['dir']['path']}{$sep}{$file}{$sep}_default.php") && $info['file'][] = '_default') break;
+                if (is_file("{$info['dir']['path']}{$sep}{$file}.php")) break;
                 array_unshift($info['args'], $slug = array_pop($info['file']));
             } while($slug);
 
@@ -298,6 +328,7 @@ final class Controller
         $this->dir = $max['dir'];
         $this->args = $max['args'];
         $this->file = $max['file'];
+        $this->extension = $max['extension'];
 
         $this->responseHeaders = new HttpHeaders();
     }
@@ -337,7 +368,7 @@ final class Controller
         $args = $this->segments;
         while(true)
         {
-            if(is_file(rtrim($this->dir . DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, $file), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . '_global.php'))
+            if(is_file(rtrim($this->dir['path'] . DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, $file), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . '_global.php'))
             {
                 $controller = clone $this;
                 $this->globalControllers[] = $controller;
@@ -360,10 +391,10 @@ final class Controller
     private function executeFile()
     {
         array_push(self::$stack, $this);
-        chdir(dirname($this->dir . DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, $this->file) . '.php'));
+        chdir(dirname($this->dir['path'] . DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, $this->file) . '.php'));
 
         ob_start();
-        $response = include $this->dir . DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, $this->file) . '.php';
+        $response = include $this->dir['path'] . DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, $this->file) . '.php';
         $ob = ob_get_clean() ?: null;
         if ($response === 1) $response = $ob ?: null;
 
