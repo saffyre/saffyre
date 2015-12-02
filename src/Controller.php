@@ -35,6 +35,12 @@ final class Controller
         $directory['path'] = $directory['path'][0] == DIRECTORY_SEPARATOR ? $directory['path'] : getcwd() . $directory['path'];
         if (!is_dir($directory['path']))
             throw new \Exception("Could not register controllers directory: '{$directory['path']}' is not a directory!");
+
+        if (is_string($directory['extensions']))
+            $directory['extensions'] = [ $directory['extensions'] ];
+        if (is_array($directory['extensions']))
+            $directory['extensions'] = array_map(function($prefix) { return trim($prefix, '/'); }, $directory['extensions']);
+
         self::$directories[] = $directory;
         usort(self::$directories, function($a, $b) { return $a['priority'] - $b['priority']; });
     }
@@ -296,10 +302,9 @@ final class Controller
                     if (!is_array($dir['extensions']) ||
                         (is_array($dir['extensions']) &&
                             count(array_filter($dir['extensions'], function($prefix) {
-                                $x1 = strpos($this->path, trim($prefix, '/') . '/') === 0;
-                                $x2 = strpos($this->path, trim($prefix, '/') . '.') === 0;
-                                $x3 = trim($prefix, '/') === $this->path;
-                                return $x1 || $x2 || $x3;
+                                return strpos($this->path, $prefix . '/') === 0
+                                    || strpos($this->path, $prefix . '.') === 0
+                                    || trim($prefix, '/') === $this->path;
                             }))
                         )
                     )
