@@ -89,8 +89,9 @@ final class Controller
 
     public $scheme;
     public $host;
-
+    public $port;
     public $path;
+    public $query;
 
     public $extension;
 
@@ -105,7 +106,22 @@ final class Controller
         return $index === null ? $parts : (isset($parts[$index]) ? $$parts[$index] : '');
     }
 
-    public $query;
+    const URL_PART_SCHEME = 0b00001;
+    const URL_PART_HOST   = 0b00010;
+    const URL_PART_PORT   = 0b00100;
+    const URL_PART_PATH   = 0b01000;
+    const URL_PART_QUERY  = 0b10000;
+    const URL_PART_BASE   = 0b00111;
+    const URL_PART_ALL    = 0b11111;
+
+    public function buildUrl($parts = Controller::URL_PART_ALL)
+    {
+        return ($parts & Controller::URL_PART_SCHEME ? "$this->scheme://" : '')
+             . ($parts & Controller::URL_PART_HOST ? $this->host : '')
+             . ($parts & Controller::URL_PART_PORT ? ":$this->port" : '')
+             . ($parts & Controller::URL_PART_PATH ? "/$this->path" : '')
+             . ($parts & Controller::URL_PART_QUERY ? "?$this->query" : '');
+    }
 
     /**
      * @var BaseClass
@@ -273,6 +289,7 @@ final class Controller
         $url = parse_url($url);
         $this->scheme = !empty($url['scheme']) ? $url['scheme'] : (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on' ? 'https' : 'http');
         $this->host = !empty($url['host']) ? $url['host'] : (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '');
+        $this->port = !empty($url['port']) ? $url['port'] : (isset($_SERVER['HTTP_PORT']) ? $_SERVER['HTTP_PORT'] : '');
         $this->path = !empty($url['path']) ? trim($url['path'], '/') : '';
         $this->query = !empty($url['query']) ? $url['query'] : '';
 
