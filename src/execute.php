@@ -34,7 +34,7 @@ namespace Saffyre {
             $result = (string)$result;
         else if (
             is_array($result) ||
-            (is_object($result) && array_filter(headers_list(), function($h) { return strpos(strtolower(preg_replace('/\\s/', '', $h)), 'content-type:application/json') === 0; })) ||
+            ((is_object($result) || $result === null) && array_filter(headers_list(), function($h) { return strpos(strtolower(preg_replace('/\\s/', '', $h)), 'content-type:application/json') === 0; })) ||
             $result instanceof \JsonSerializable
         )
             $result = json_encode($result);

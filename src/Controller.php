@@ -418,7 +418,7 @@ final class Controller
         ob_start();
         $response = include $this->dir['path'] . DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, $this->file) . '.php';
         $ob = ob_get_clean() ?: null;
-        if ($response === 1) $response = $ob ?: null;
+        if ($response === 1 || ($ob && $response === null)) $response = $ob ?: null;
 
         array_pop(self::$stack);
 
