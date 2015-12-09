@@ -170,7 +170,7 @@ final class Controller
             return $this->body;
         $this->body = file_get_contents('php://input');
         if (strpos($this->headers->{'Content-Type'}, 'application/json') === 0)
-            $this->body = json_decode($this->body);
+            $this->body = new BaseClass($this->body);
         return $this->body;
     }
 
