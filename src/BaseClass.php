@@ -11,11 +11,9 @@ namespace Saffyre;
  * @version 1.0.2
  */
 
-class BaseClass extends \stdClass {
-
-	public function __get($name) {
-		return null;
-	}
+class BaseClass extends \stdClass
+{
+	public function __get($name) {}
 
 	public static function create($obj) {
 		return new static($obj);
@@ -46,6 +44,14 @@ class BaseClass extends \stdClass {
 			if(array_search($key, $except) === false) unset($this->$key);
 	}
 
+    /**
+     * Performs a shallow (1-level deep) import of all properties of $obj to this instance.
+     * If a property value is an object with a __clone method, it will be cloned before being assigned to this instance.
+     * If $onlyProperties is true, only properties that already exist on this instance will be copied.
+     *
+     * @param $obj
+     * @param bool|false $onlyProperties
+     */
 	public function __import($obj, $onlyProperties = false) {
 		if (is_string($obj))
 			$obj = json_decode($obj);
@@ -54,6 +60,38 @@ class BaseClass extends \stdClass {
 				if (!$onlyProperties || property_exists($this, $key))
 					$this->$key = (is_object($value) && method_exists($value, '__clone') ? clone $value : $value);
 	}
+
+    /**
+     * Recursively convert all properties of this object that are instances of stdClass to BaseClass instances.
+     * @return $this
+     */
+    public function convert()
+    {
+        self::__convert($this);
+        return $this;
+    }
+
+    private static function __convert($value)
+    {
+        if ($value instanceof BaseClass) {
+            foreach ($value as $key => $val) {
+                $value->$key = self::__convert($val);
+            }
+        }
+
+        else if ($value instanceof \stdClass) {
+            return self::__convert(new BaseClass($value));
+        }
+
+        else if (is_array($value))
+        {
+            foreach ($value as $key => $val) {
+                $value[$key] = self::__convert($val);
+            }
+        }
+
+        return $value;
+    }
 
 	public function __compare(BaseClass $compare, $except = array(), $debug = false) {
 		$except = (array)$except;
