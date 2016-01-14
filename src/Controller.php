@@ -311,8 +311,8 @@ final class Controller
             if ($dir['extensions'])
             {
                 $lastIndex = count($info['file']) - 1;
-                @list($filename, $extension) = explode('.', $info['file'][$lastIndex], 2);
-                if ($filename && $extension)
+                $fileParts = explode('.', $info['file'][$lastIndex], 2);
+                if (count($fileParts) == 2)
                 {
                     if (is_string($dir['extensions']))
                         $dir['extensions'] = [ $dir['extensions'] ];
@@ -326,8 +326,8 @@ final class Controller
                         )
                     )
                     {
-                        $info['extension'] = $extension;
-                        $info['file'][$lastIndex] = $filename;
+                        $info['extension'] = $fileParts[0];
+                        $info['file'][$lastIndex] = $fileParts[1];
                     }
                 }
             }
