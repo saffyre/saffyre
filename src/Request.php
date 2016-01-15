@@ -35,6 +35,9 @@ class Request {
      */
     public static function responseStatus($code, $message)
     {
+        if (headers_sent())
+            return;
+
         if ($message === null)
             $message = self::getDefaultStatusMessage($code);
 

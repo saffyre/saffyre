@@ -21,8 +21,9 @@ namespace Saffyre {
 
         $result = $controller->execute(true);
 
-        foreach ($controller->responseHeaders as $header => $value)
-            header("$header: $value");
+        if (!headers_sent())
+            foreach ($controller->responseHeaders as $header => $value)
+                header("$header: $value");
 
         // Convert the output to a string:
         // - If the result is an object that implements __toString, convert it to a string
