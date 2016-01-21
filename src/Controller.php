@@ -326,8 +326,8 @@ final class Controller
                         )
                     )
                     {
-                        $info['extension'] = $fileParts[0];
-                        $info['file'][$lastIndex] = $fileParts[1];
+                        $info['extension'] = $fileParts[1];
+                        $info['file'][$lastIndex] = $fileParts[0];
                     }
                 }
             }
