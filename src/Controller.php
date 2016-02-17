@@ -2,6 +2,8 @@
 
 namespace Saffyre;
 
+use Underscore\Underscore as _;
+
 final class Controller
 {
     // REGISTERED DIRECTORIES
@@ -308,6 +310,15 @@ final class Controller
                 'extension' => ''
             ];
 
+            if ($dir['prefix'])
+            {
+                $prefix = Controller::cleanPath($dir['prefix']);
+                if ($prefix == (array)_::first($this->segments, count($prefix)))
+                {
+                    $info['file'] = (array)_::rest($this->segments, count($prefix));
+                }
+            }
+
             if ($dir['extensions'])
             {
                 $lastIndex = count($info['file']) - 1;
@@ -339,7 +350,7 @@ final class Controller
                 array_unshift($info['args'], $slug = array_pop($info['file']));
             } while($slug);
 
-            if (!$max || count(Arrays::without($info['file'], '_default')) > count(Arrays::without($max['file'], '_default')))
+            if (!$max || count(_::reject($info['file'], function($f) { return $f == '_default'; })) > count(_::reject($max['file'], function($f) { return $f == '_default'; })))
                 $max = $info;
         }
 
