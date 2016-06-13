@@ -457,7 +457,8 @@ final class Controller
         $ob = ob_get_clean() ?: null;
         if ($response === 1 || ($ob && $response === null)) $response = $ob ?: null;
 
-        array_pop(self::$stack);
+        if (!$this->isMainRequest())
+            array_pop(self::$stack);
 
         if (is_int($response) && $response >= 100 && $response < 600)
         {
