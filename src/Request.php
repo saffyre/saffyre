@@ -16,8 +16,9 @@ class Request {
      * @param string $url The url to redirect to.
      * @param array $headers Additional headers to set (each array value should be an entire header line).
      */
-    public static function redirect($url, $headers = array(), $temporary = false)
+    public static function redirect($url, $temporary = false, $headers = array())
     {
+        $headers = $headers ?: [];
         array_unshift($headers, 'HTTP/1.1 ' . ($temporary ? '302 Moved Temporarily' : '301 Moved Permanently'));
         if(preg_match('/^https?:\/\//', $url))
             header("Location: $url");

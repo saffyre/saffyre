@@ -248,6 +248,32 @@ final class Controller
     }
 
 
+    /**
+     * @var BaseClass
+     */
+    public $responseCookies;
+    
+    public function setCookie($name, $value = null, $expire = null, $path = null, $domain = null, $secure = null, $httponly = null) {
+        if (!$this->responseCookies)
+            $this->responseCookies = new BaseClass();
+        $this->responseCookies->$name = [
+            'value' => $value,
+            'expire' => $expire,
+            'path' => $path,
+            'domain' => $domain ?: $this->dir['cookieDomain'] ?: $this->host,
+            'secure' => $secure,
+            'httpOnly' => $httponly
+        ];
+        if ($this->isMainRequest())
+            setcookie($name, $value, $expire, $path, $domain, $secure, $httponly);
+    }
+
+
+    protected function error($errorCode, $returnValue = null) {
+        $this->setStatusCode($errorCode);
+        return $returnValue;
+    }
+
 
 
     // CONTROLLER FILE VALUES
@@ -370,9 +396,9 @@ final class Controller
         return new Controller($method, $url);
     }
 
-    public static function fromRequest()
+    public static function fromRequest($method = null, $url = null)
     {
-        return Controller::create($_SERVER['REQUEST_METHOD'], $url = (isset($_SERVER['HTTPS']) ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]")
+        return Controller::create($method ?: $_SERVER['REQUEST_METHOD'], $url ?: (isset($_SERVER['HTTPS']) ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]")
             ->get($_GET)
             ->post($_POST)
             ->cookies($_COOKIE)
@@ -445,7 +471,7 @@ final class Controller
         return $this->response = $response;
     }
 
-    public function execute($withGlobal = true)
+    public function execute($withGlobal = true, &$statusCode = null)
     {
         $this->get = $this->get ?: new BaseClass();
         $this->post = $this->post ?: new BaseClass();
@@ -456,9 +482,13 @@ final class Controller
         {
             $this->executeGlobal();
             if ($this->canceled)
+            {
+                $statusCode = $this->statusCode;
                 return $this->response;
+            }
         }
 
+        $statusCode = $this->statusCode;
         return $this->executeFile();
     }
 

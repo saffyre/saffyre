@@ -15,8 +15,8 @@ class Onion {
 
 	public function __construct($file, $vars = null)
 	{
-		if(!self::$dir) throw new Exception('Onion directory has not been set!');
-		if(!is_dir(self::$dir)) throw new Exception('Onion directory ('.self::$dir.') does not exist!');
+		if(!self::$dir) throw new \Exception('Onion directory has not been set!');
+		if(!is_dir(self::$dir)) throw new \Exception('Onion directory ('.self::$dir.') does not exist!');
 
 		self::$dir = rtrim(self::$dir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;		// Be sure there is a / at the end of directory
 
@@ -26,7 +26,7 @@ class Onion {
 		$this->__file = (substr($template[0], 0, 1) == DIRECTORY_SEPARATOR ? '' : self::$dir) . $template[0];
 		$this->__section = isset($template[1]) ? $template[1] : '';
 
-		if(!is_file($this->__file)) throw new Exception('Onion file ('.$this->__file.') does not exist!');
+		if(!is_file($this->__file)) throw new \Exception('Onion file ('.$this->__file.') does not exist!');
 
 		if(is_array($vars))
 			foreach($vars as $key => $value) $this->$key = $value;
@@ -96,7 +96,7 @@ class Onion {
 			ob_start(array($this, 'fatal'));
 			try {
 				eval('?>'.self::$__files[$file][$section][0]);
-			} catch(Exception $e) {
+			} catch(\Exception $e) {
 				Onion::exceptionHandler($e);
 			}
 			restore_error_handler();
@@ -137,7 +137,7 @@ class Onion {
 		else echo $str;
 	}
 
-	public static function exceptionHandler(Exception $e) {
+	public static function exceptionHandler(\Exception $e) {
 		echo "<br/><br/><b>{$e->getMessage()}</b><br/>".nl2br($e->getTraceAsString());
 	}
 
