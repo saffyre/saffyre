@@ -117,6 +117,11 @@ class Onion {
 		return $text;
 	}
 
+    /**
+     * @var \Callable
+     */
+    public static $errorHandler;
+
 	public function error($errno, $errstr, $errfile, $errline, $errcontext, $return = false)
 	{
 		$errs = array(
@@ -133,6 +138,10 @@ class Onion {
 			$str = "<br/><br/><b>Onion {$errs[$errno]}</b>: $errstr in <b>$file" . ($section ? "#$section" : '') . '</b> on line <b>' . ($errline + self::$__files[$file][$section][1] + 1) . "</b>\n";
 		else
 			$str = "<br/><br/><b>{$errs[$errno]}</b>: $errstr in <b>$errfile</b> on line <b>$errline</b>\n";
+        
+        if ($handler = self::$errorHandler)
+            $handler($errno, $errstr, $file . ($section ? "#$section" : ''), $errline + self::$__files[$file][$section][1] + 1, $errcontext);
+        
 		if($return) return $str;
 		else echo $str;
 	}
