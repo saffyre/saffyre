@@ -346,6 +346,7 @@ final class Controller
             }
 
             if ($dir['extensions'])
+            if ($dir['extensions'] && count($info['file']) > 0)
             {
                 $lastIndex = count($info['file']) - 1;
                 $fileParts = explode('.', $info['file'][$lastIndex], 2);
