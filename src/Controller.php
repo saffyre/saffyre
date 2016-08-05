@@ -118,9 +118,9 @@ final class Controller
 
     public function buildUrl($parts = Controller::URL_PART_ALL)
     {
-        return (($parts & Controller::URL_PART_SCHEME) && $this->scheme ? "$this->scheme://" : '')
+        return ($parts & Controller::URL_PART_SCHEME ? "$this->scheme://" : '')
              . ($parts & Controller::URL_PART_HOST ? $this->host : '')
-             . (($parts & Controller::URL_PART_PORT) && $this->port ? ":$this->port" : '')
+             . ($parts & Controller::URL_PART_PORT ? ":$this->port" : '')
              . ($parts & Controller::URL_PART_PATH ? "/$this->path" : '')
              . ($parts & Controller::URL_PART_QUERY ? "?$this->query" : '');
     }
