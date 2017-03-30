@@ -119,10 +119,10 @@ final class Controller
     public function buildUrl($parts = Controller::URL_PART_ALL)
     {
         return ($parts & Controller::URL_PART_SCHEME ? "$this->scheme://" : '')
-             . ($parts & Controller::URL_PART_HOST ? $this->host : '')
-             . ($parts & Controller::URL_PART_PORT ? ":$this->port" : '')
-             . ($parts & Controller::URL_PART_PATH ? "/$this->path" : '')
-             . ($parts & Controller::URL_PART_QUERY ? "?$this->query" : '');
+            . ($parts & Controller::URL_PART_HOST ? $this->host : '')
+            . ($parts & Controller::URL_PART_PORT ? ":$this->port" : '')
+            . ($parts & Controller::URL_PART_PATH ? "/$this->path" : '')
+            . ($parts & Controller::URL_PART_QUERY ? "?$this->query" : '');
     }
 
     /**
@@ -199,8 +199,8 @@ final class Controller
     public function request($includeHost = true, $includeQuery = true)
     {
         return ($includeHost ? "$this->scheme://$this->host" : "")
-        . "/$this->path"
-        . ($includeQuery ? "?$this->query" : "");
+            . "/$this->path"
+            . ($includeQuery ? "?$this->query" : "");
     }
 
 
@@ -252,7 +252,7 @@ final class Controller
      * @var BaseClass
      */
     public $responseCookies;
-    
+
     public function setCookie($name, $value = null, $expire = null, $path = null, $domain = null, $secure = null, $httponly = null) {
         if (!$this->responseCookies)
             $this->responseCookies = new BaseClass();
@@ -299,7 +299,7 @@ final class Controller
     private $segments = [];
     private $args = [];
 
-
+    private $isGlobal = false;
 
 
 
@@ -346,29 +346,29 @@ final class Controller
             }
 
             if ($dir['extensions'])
-            if ($dir['extensions'] && count($info['file']) > 0)
-            {
-                $lastIndex = count($info['file']) - 1;
-                $fileParts = explode('.', $info['file'][$lastIndex], 2);
-                if (count($fileParts) == 2)
+                if ($dir['extensions'] && count($info['file']) > 0)
                 {
-                    if (is_string($dir['extensions']))
-                        $dir['extensions'] = [ $dir['extensions'] ];
-                    if (!is_array($dir['extensions']) ||
-                        (is_array($dir['extensions']) &&
-                            count(array_filter($dir['extensions'], function($prefix) {
-                                return strpos($this->path, $prefix . '/') === 0
-                                    || strpos($this->path, $prefix . '.') === 0
-                                    || trim($prefix, '/') === $this->path;
-                            }))
-                        )
-                    )
+                    $lastIndex = count($info['file']) - 1;
+                    $fileParts = explode('.', $info['file'][$lastIndex], 2);
+                    if (count($fileParts) == 2)
                     {
-                        $info['extension'] = $fileParts[1];
-                        $info['file'][$lastIndex] = $fileParts[0];
+                        if (is_string($dir['extensions']))
+                            $dir['extensions'] = [ $dir['extensions'] ];
+                        if (!is_array($dir['extensions']) ||
+                            (is_array($dir['extensions']) &&
+                                count(array_filter($dir['extensions'], function($prefix) {
+                                    return strpos($this->path, $prefix . '/') === 0
+                                        || strpos($this->path, $prefix . '.') === 0
+                                        || trim($prefix, '/') === $this->path;
+                                }))
+                            )
+                        )
+                        {
+                            $info['extension'] = $fileParts[1];
+                            $info['file'][$lastIndex] = $fileParts[0];
+                        }
                     }
                 }
-            }
 
             do {
                 $file = implode($sep, $info['file']);
@@ -433,6 +433,7 @@ final class Controller
                 $controller = clone $this;
                 $this->globalControllers[] = $controller;
                 $controller->file = array_merge($file, array('_global'));
+                $controller->isGlobal = true;
                 $controller->executeFile();
                 if ($controller->statusCode !== null)
                     $this->setStatusCode($controller->statusCode, $controller->statusMessage);
@@ -458,7 +459,7 @@ final class Controller
         $ob = ob_get_clean() ?: null;
         if ($response === 1 || ($ob && $response === null)) $response = $ob ?: null;
 
-        if (!$this->isMainRequest())
+        if ($this->isGlobal || !$this->isMainRequest())
             array_pop(self::$stack);
 
         if (is_int($response) && $response >= 100 && $response < 600)
