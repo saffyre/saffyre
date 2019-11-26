@@ -2,7 +2,7 @@
 
 namespace Saffyre;
 
-use Underscore\Underscore as _;
+use Underscore as _;
 
 final class Controller
 {

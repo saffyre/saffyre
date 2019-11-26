@@ -18,7 +18,6 @@
         "files": [ "src/execute.php" ]
     },
     "require": {
-        "brombal/underscore": "^0.2.0"
     },
     "require-dev": {
         "phpunit/phpunit": "~5.0"
